@@ -111,7 +111,7 @@ export default function SettingsScreen() {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            Built with care for your skincare journey
+            rahh
           </Text>
         </View>
       </ScrollView>
