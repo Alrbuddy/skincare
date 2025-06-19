@@ -39,4 +39,25 @@ export class StorageService {
       }
     });
   }
+
+  // Wake/Sleep time storage
+  static async setWakeTime(time: string): Promise<void> {
+    this.storage['wake_time'] = time;
+  }
+  static async getWakeTime(): Promise<string | null> {
+    return this.storage['wake_time'] || null;
+  }
+  static async setSleepTime(time: string): Promise<void> {
+    this.storage['sleep_time'] = time;
+  }
+  static async getSleepTime(): Promise<string | null> {
+    return this.storage['sleep_time'] || null;
+  }
+
+  static async setReminderEnabled(val: boolean): Promise<void> {
+    this.storage['reminder_enabled'] = val;
+  }
+  static async getReminderEnabled(): Promise<boolean> {
+    return typeof this.storage['reminder_enabled'] === 'boolean' ? this.storage['reminder_enabled'] : true;
+  }
 }
