@@ -1,6 +1,4 @@
-// @ts-nocheck
-// This file uses JSX/TSX. Ensure your tsconfig.json has "jsx": "react-native" or "react-jsx".
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ColorValue } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CircleCheck as CheckCircle, Circle, Clock, TriangleAlert as AlertTriangle } from 'lucide-react-native';
@@ -15,7 +13,7 @@ interface RoutineCardProps {
   steps: RoutineStep[];
   progress: ProgressData;
   onStepToggle: (stepId: string, completed: boolean) => void;
-  gradientColors: string[];
+  gradientColors: readonly [ColorValue, ColorValue, ...ColorValue[]];
   accentColor: string;
 }
 

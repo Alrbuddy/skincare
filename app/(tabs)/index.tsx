@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { RoutineCard } from '@/components/RoutineCard';
@@ -13,38 +13,63 @@ export default function HomeScreen() {
   const [eveningRoutine, setEveningRoutine] = useState<RoutineStep[]>([]);
   const [morningProgress, setMorningProgress] = useState<Record<string, boolean>>({});
   const [eveningProgress, setEveningProgress] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const now = new Date();
-    setCurrentDate(now);
-    
-    const { morning, evening } = getRoutineForDate(now);
-    setMorningRoutine(morning);
-    setEveningRoutine(evening);
-    
-    loadProgress();
+    initializeData();
   }, []);
 
+  const initializeData = async () => {
+    try {
+      setIsLoading(true);
+      const now = new Date();
+      setCurrentDate(now);
+      
+      const { morning, evening } = getRoutineForDate(now);
+      setMorningRoutine(morning);
+      setEveningRoutine(evening);
+      
+      await loadProgress();
+    } catch (error) {
+      console.error('Error initializing data:', error);
+      Alert.alert('Error', 'Failed to load routine data. Please try restarting the app.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loadProgress = async () => {
-    const dateKey = currentDate.toDateString();
-    const morningData = await StorageService.getProgress(dateKey, 'morning');
-    const eveningData = await StorageService.getProgress(dateKey, 'evening');
-    
-    setMorningProgress(morningData || {});
-    setEveningProgress(eveningData || {});
+    try {
+      const dateKey = currentDate.toDateString();
+      const morningData = await StorageService.getProgress(dateKey, 'morning');
+      const eveningData = await StorageService.getProgress(dateKey, 'evening');
+      
+      setMorningProgress(morningData || {});
+      setEveningProgress(eveningData || {});
+    } catch (error) {
+      console.error('Error loading progress:', error);
+      // Don't show alert for progress loading errors as it's less critical
+    }
   };
 
   const updateProgress = async (routineType: RoutineType, stepId: string, completed: boolean) => {
-    const dateKey = currentDate.toDateString();
-    
-    if (routineType === 'morning') {
-      const newProgress = { ...morningProgress, [stepId]: completed };
-      setMorningProgress(newProgress);
-      await StorageService.saveProgress(dateKey, 'morning', newProgress);
-    } else {
-      const newProgress = { ...eveningProgress, [stepId]: completed };
-      setEveningProgress(newProgress);
-      await StorageService.saveProgress(dateKey, 'evening', newProgress);
+    try {
+      const dateKey = currentDate.toDateString();
+      
+      if (routineType === 'morning') {
+        const newProgress = { ...morningProgress, [stepId]: completed };
+        setMorningProgress(newProgress);
+        await StorageService.saveProgress(dateKey, 'morning', newProgress);
+      } else {
+        const newProgress = { ...eveningProgress, [stepId]: completed };
+        setEveningProgress(newProgress);
+        await StorageService.saveProgress(dateKey, 'evening', newProgress);
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      Alert.alert('Error', 'Failed to save progress. Please try again.');
+      // Revert the UI state if save failed
+      await loadProgress();
     }
   };
 
@@ -70,6 +95,17 @@ export default function HomeScreen() {
     return getRoutineTypeForDay(dayOfWeek);
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Loading your routine...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -90,7 +126,7 @@ export default function HomeScreen() {
             steps={morningRoutine}
             progress={morningProgress}
             onStepToggle={(stepId, completed) => updateProgress('morning', stepId, completed)}
-            gradientColors={['#E3F2FD', '#BBDEFB']}
+            gradientColors={['#E3F2FD', '#BBDEFB'] as const}
             accentColor="#1976D2"
           />
 
@@ -101,7 +137,7 @@ export default function HomeScreen() {
             steps={eveningRoutine}
             progress={eveningProgress}
             onStepToggle={(stepId, completed) => updateProgress('evening', stepId, completed)}
-            gradientColors={['#F3E5F5', '#E1BEE7']}
+            gradientColors={['#F3E5F5', '#E1BEE7'] as const}
             accentColor="#7B1FA2"
           />
         </View>
@@ -216,5 +252,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     lineHeight: 16,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
   },
 });

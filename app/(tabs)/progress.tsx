@@ -1,5 +1,3 @@
-// @ts-nocheck
-// This file uses JSX/TSX. Ensure your tsconfig.json has "jsx": "react-native" or "react-jsx".
 import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
